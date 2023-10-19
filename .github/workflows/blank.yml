@@ -39,7 +39,7 @@ jobs:
         run: |
           npm install
           npm install sfdx-cli --global
-          sfdx force --help
+          sfdx auth:jwt:grant -u prabhatjha25@gmail.com -i 3MVG9ZL0ppGP5UrAGmwExlELn2uWLTQfoq23TAfP9nWuc_wTJr7iLFrqpqGCX.V29c0SG2XQGppuukBGn3iVB -f server.key
           
       # Run PMD scan
       - name: 'Run PMD scan'
