@@ -1,10 +1,14 @@
-name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+name: Production Pipeline
+run-name: ${{ github.actor }} is running pipeline on ${{ github.repository }}
 on: 
-  push:
+  workflow_dispatch:
+  pull_request:
+    types: [closed]
     branches:
+      - master
       - main
-    
+    paths:
+      - 'force-app/**'
       
 jobs:
   Explore-GitHub-Actions:
@@ -25,36 +29,86 @@ jobs:
       
   build:
     runs-on: ubuntu-latest
-    environment: developer
+    environment: production
     steps:
       # Checkout the Source code from the latest commit
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           
-      
-      # Install the SFDX CLI 
+      - name: Install NPM
+        run: |
+          npm install
+      # Install the SFDX CLI using npm command
       - name: Install the SFDX CLI
         run: |
-                    - export CLIURL=https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz  
-                    - export SFDX_AUTOUPDATE_DISABLE=false
-                    - export SFDX_USE_GENERIC_UNIX_KEYCHAIN=true
-                    - export SFDX_DOMAIN_RETRY=300
-                    - export SFDX_DISABLE_APP_HUB=true
-                    - export SFDX_LOG_LEVEL=DEBUG
-                    - export ROOTDIR=src/
-                    #Create sfdx directory
-                    - mkdir sfdx
-                    #Install Salesforce CLI
-                    - wget -qO- $CLIURL | tar xJ -C sfdx --strip-components 1
-                    - "./sfdx/install"
-                    - export PATH=./sfdx/$(pwd):$PATH
-                    - sfdx auth:jwt:grant -u prabhatjha25@gmail.com -i 3MVG9ZL0ppGP5UrAGmwExlELn2uWLTQfoq23TAfP9nWuc_wTJr7iLFrqpqGCX.V29c0SG2XQGppuukBGn3iVB -f server.key
-      
+          npm install sfdx-cli --global
+          sfdx force --help
+          
+      - name: Install the sfdx-git-delta plugin
+        run: |
+          echo 'y' | sfdx plugins:install sfdx-git-delta
+          
+      - name: Decrypt the server.key.enc file & store inside assets folder
+        run: |
+          openssl enc -nosalt -aes-256-cbc -d -in ${{ secrets.ENCRYPTION_KEY_FILE }} -out ${{ secrets.JWT_KEY_FILE }} -base64 -K ${{ secrets.DECRYPTION_KEY }} -iv ${{ secrets.DECRYPTION_IV }}
+          
       - name: Authenticate Salesforce ORG
         run: |
-          sfdx auth:jwt:grant -u prabhatjha25@gmail.com -i 3MVG9ZL0ppGP5UrAGmwExlELn2uWLTQfoq23TAfP9nWuc_wTJr7iLFrqpqGCX.V29c0SG2XQGppuukBGn3iVB -f server.key
+          sfdx force:auth:jwt:grant --clientid ${{ secrets.HUB_CONSUMER_KEY }} --jwtkeyfile  ${{ secrets.JWT_KEY_FILE }} --username ${{ secrets.HUB_USER_NAME }} --setdefaultdevhubusername -a HubOrg --instanceurl ${{ secrets.HUB_LOGIN_URL }} 
       
-      - name: Validate Source Code Against Salesforce ORG
+      - name: Generate the package.xml for delta files
         run: |
-          sfdx force:source:deploy -p force-app -c -u HubOrg
+          mkdir delta
+          sfdx sgd:source:delta --to "HEAD" --from "HEAD~1" --output "./delta" --ignore-whitespace -d -i .sgdignore
+          echo "--- package.xml generated with added and modified metadata ---"
+          cat delta/package/package.xml
+      
+      - name: Install the SFDX CLI Scanner
+        run: |
+          echo 'y' | sfdx plugins:install @salesforce/sfdx-scanner
+      
+      - name: Run SFDX CLI Scanner
+        run: |
+          mkdir reports
+          sfdx scanner:run -f html -t "force-app" -e "eslint,retire-js,pmd,cpd" -c "Design,Best Practices,Code Style,Performance,Security" --outfile reports/scan-reports.html
+      
+      # Run Apex PMD Scan
+      - name: 'Run PMD scan'
+        uses: pmd/pmd-github-action@v1
+        id: pmd
+        with:
+            sourcePath: 'force-app'
+            rulesets: 'ruleset.xml'
+            analyzeModifiedFilesOnly: false
+
+      # Check for PMD violations
+      - name: 'Check for PMD violations'
+        # if: steps.pmd.outputs.violations != 0
+        run: |
+          # exit 1
+          echo "test"
+      
+      - name: Upload SARIF file
+        # if: steps.pmd.outputs.violations != 0
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: pmd-report.sarif
+      
+      - uses: actions/upload-artifact@v3
+        with:
+          name: cli-scan-report
+          path: reports/scan-reports.html
+      
+      # Run Sonar Cloud Scan
+      
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      
+      - name: Deploy Delta components to Salesofrce
+        run: |
+          sfdx force:source:deploy -x delta/package/package.xml -c -l RunLocalTests -u HubOrg
+    
