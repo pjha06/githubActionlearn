@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+    
       
 jobs:
   Explore-GitHub-Actions:
@@ -31,14 +32,24 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: Install NPM
-        run: |
-          npm install
-      # Install the SFDX CLI using npm command
+      
+      # Install the SFDX CLI 
       - name: Install the SFDX CLI
         run: |
-          npm install sfdx-cli --global
-          sfdx force --help
+                    - export CLIURL=https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz  
+                    - export SFDX_AUTOUPDATE_DISABLE=false
+                    - export SFDX_USE_GENERIC_UNIX_KEYCHAIN=true
+                    - export SFDX_DOMAIN_RETRY=300
+                    - export SFDX_DISABLE_APP_HUB=true
+                    - export SFDX_LOG_LEVEL=DEBUG
+                    - export ROOTDIR=src/
+                    #Create sfdx directory
+                    - mkdir sfdx
+                    #Install Salesforce CLI
+                    - wget -qO- $CLIURL | tar xJ -C sfdx --strip-components 1
+                    - "./sfdx/install"
+                    - export PATH=./sfdx/$(pwd):$PATH
+                    - sfdx auth:jwt:grant -u prabhatjha25@gmail.com -i 3MVG9ZL0ppGP5UrAGmwExlELn2uWLTQfoq23TAfP9nWuc_wTJr7iLFrqpqGCX.V29c0SG2XQGppuukBGn3iVB -f server.key
       
       - name: Authenticate Salesforce ORG
         run: |
