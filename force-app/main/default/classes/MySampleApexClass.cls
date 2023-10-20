@@ -5,7 +5,7 @@ public class MySampleApexClass {       //Class definition and body
    public static Integer getCalculatedValue () {
    // Method definition and body
    // do some calculation
-      myValue = myValue+10;
+      myValue = myValue+20;
       return myValue;
    }
 }
