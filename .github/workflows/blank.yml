@@ -42,5 +42,5 @@ jobs:
           npm audit fix
           sfdx auth:jwt:grant --username prabhatjha25@gmail.com -i ${{ secrets.HUB_CONSUMER_KEY }} -f jwt/server.key
           echo "deploying to org1"
-          sfdx force:source:deploy -p force-app/main/default -u prabhatjha25@gmail.com -l RunLocalTests
+          #sfdx force:source:deploy -p force-app/main/default -u prabhatjha25@gmail.com -l RunLocalTests
           
