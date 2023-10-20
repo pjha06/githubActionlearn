@@ -3,7 +3,7 @@ public class MySampleApexClass {       //Class definition and body
    public static String myString = ''; //Class Member variable
    
    public static Integer getCalculatedValue () {
-   // Method definition and body
+   // Method definition and body1
    // do some calculation1
       myValue = myValue+20;
       return myValue;
