@@ -40,6 +40,4 @@ jobs:
           npm install
           npm install sfdx-cli --global
           sfdx auth:jwt:grant -u prabhatjha25@gmail.com -i ${{ secrets.HUB_CONSUMER_KEY }} -f jwt/server.key
-		  echo "Deploying Code to Org"
           
-      
