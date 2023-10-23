@@ -1,5 +1,6 @@
 name: 'Assert Branch Naming Convention'
-on: 
+on:
+  create
 
 jobs:
   branch-naming-rules:
