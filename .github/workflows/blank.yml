@@ -2,7 +2,7 @@ name: github-actions-template
 run-name: ${{ github.actor }} is running GitHub Actions templates
 
 on:
-  workflow_dispatch:
+    
   push:
     branches:
       - main
@@ -17,6 +17,12 @@ on:
         - main
     paths:
         - 'force-app/**'
+  workflow_dispatch:
+    inputs:
+      SHADifflimit:
+        description: 'how many commits to consider fir generating diff'
+        required: true
+        default: '1'
       
 jobs:
   build:
@@ -42,5 +48,6 @@ jobs:
           npm audit fix
           sfdx auth:jwt:grant --username prabhatjha25@gmail.com -i ${{ secrets.HUB_CONSUMER_KEY }} -f jwt/server.key
           echo "deploying to org1"
+          echo "shadiff>>"'${{ github.event.inputs.SHADifflimit }}'
           #sfdx force:source:deploy -p force-app/main/default -u prabhatjha25@gmail.com -l RunLocalTests
           
