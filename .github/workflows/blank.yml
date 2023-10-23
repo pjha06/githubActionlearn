@@ -46,8 +46,14 @@ jobs:
           npm install
           npm install sfdx-cli --global
           npm audit fix
+      - name: Authenticate Salesforce ORG
+        run: |
           sfdx auth:jwt:grant --username prabhatjha25@gmail.com -i ${{ secrets.HUB_CONSUMER_KEY }} -f jwt/server.key
           echo "deploying to org1"
           echo "shadiff>>"'${{ github.event.inputs.SHADifflimit }}'
           #sfdx force:source:deploy -p force-app/main/default -u prabhatjha25@gmail.com -l RunLocalTests
+    
+      - name: Install the SFDX Git Delta Plugin
+        run: |
+          echo 'y' | sfdx plugins:install sfdx-git-delta  
           
