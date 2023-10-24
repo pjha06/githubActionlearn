@@ -15,7 +15,11 @@
     "postinstall": "husky install",
     "check-branch-name": "chmod 755 ./hooks/check_branch_naming.sh && sh ./hooks/check_branch_naming.sh"
   },
-
+  "husky": {
+    "hooks": {
+      "pre-commit": "run-p lint check-branch-name"
+    }
+},
   "devDependencies": {
     "@lwc/eslint-plugin-lwc": "^1.1.2",
     "@prettier/plugin-xml": "^2.0.1",
