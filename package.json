@@ -39,9 +39,4 @@
       "eslint"
     ]
   }
-  "husky": {
-    "hooks": {
-      "pre-commit": "run-p lint check-branch-name"
-    }
-}
 }
