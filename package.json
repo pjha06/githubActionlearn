@@ -13,7 +13,6 @@
     "prettier": "prettier --write \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\"",
     "prettier:verify": "prettier --list-different \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\"",
     "postinstall": "husky install",
-    "precommit": "lint-staged","lint check-branch-name",
     "check-branch-name": "chmod 755 ./hooks/check_branch_naming.sh && sh ./hooks/check_branch_naming.sh"
   },
 
@@ -40,4 +39,9 @@
       "eslint"
     ]
   }
+  "husky": {
+    "hooks": {
+      "pre-commit": "run-p lint check-branch-name"
+    }
+}
 }
