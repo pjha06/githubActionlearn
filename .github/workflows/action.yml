@@ -8,8 +8,8 @@ jobs:
     steps:
       - uses: deepakputhraya/action-branch-name@master
         with:
-          regex: '[0-9][0-9][0-9]' # Regex the branch should match. This example enforces grouping
-          allowed_prefixes: 'feature,stable,fix' # All branches should start with the given prefix
-          ignore: master,develop # Ignore exactly matching branch names from convention
-          min_length: 5 # Min length of the branch name
+          regex: '[0-9]+$' # Regex the branch should match. This example enforces grouping
+          allowed_prefixes: 'feature/SOC-,bugfix/SOC-,hotfix/SOC-' # All branches should start with the given prefix
+          ignore: master,main,develop # Ignore exactly matching branch names from convention
+          min_length: 12 # Min length of the branch name
           max_length: 20 # Max length of the branch name
