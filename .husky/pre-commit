@@ -1,5 +1,5 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
-run-p lint check-branch-name
+npm run check-branch-name
 
 
