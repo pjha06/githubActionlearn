@@ -1,0 +1,10 @@
+{
+    "$schema": "https://raw.githubusercontent.com/dxatscale/sfpowerscripts/main/packages/core/resources/pooldefinition.schema.json",
+    "tag": "dev-pool",
+    "expiry": 30,
+    "maxAllocation": 10,
+    "configFilePath": "config/project-scratch-def.json",
+    "succeedOnDeploymentErrors": false,
+    "relaxAllIPRanges": true,
+    "postDeploymentScriptPath": "scripts/pools/dev-pool-post.sh"
+}

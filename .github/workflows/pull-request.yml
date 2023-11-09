@@ -1,0 +1,56 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - develop
+
+jobs:
+  code-analyze:
+    name: Run Code Analyze
+    uses: ./.github/workflows/code-analyze.yml
+
+  is-branch-up-to-date:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check if branch is ahead of develop
+        run: |
+          if ! git merge-base --is-ancestor origin/develop ${{ github.event.pull_request.head.sha }};
+          then echo "This branch is not up to date with develop";
+          exit 1; fi
+
+  detect-changes:
+    uses: ./.github/workflows/detect-pr-changes.yml
+    permissions:
+      pull-requests: read
+      contents: read
+
+  validate-scratch-org:
+    name: Validate on Scratch Org
+    uses: ./.github/workflows/scratch-org-validation.yml
+    needs: [is-branch-up-to-date, detect-changes]
+    if: ${{ needs.detect-changes.outputs.source-files == 'true' || needs.detect-changes.outputs.scratch-org-config == 'true'  || needs.detect-changes.outputs.scratch-org-pr-pipeline == 'true'}}
+    secrets: inherit
+    permissions:
+      pull-requests: read
+      contents: read
+
+  validate-dev-stage:
+    name: Validate on Dev-Stage
+    uses: ./.github/workflows/deploy.yml
+    needs: [is-branch-up-to-date, detect-changes]
+    if: ${{ needs.detect-changes.outputs.source-files == 'true' || needs.detect-changes.outputs.deploy-pr-pipeline == 'true' }}
+    secrets: inherit
+    permissions:
+      pull-requests: read
+      contents: write
+    with:
+      validate-only: true
+      target-org: Dev-Stage
+      concurrency-group: 'dev-stage-deploy'
+      deploy-type: ${{ needs.detect-changes.outputs.source-files == 'true' && 'Delta' || 'Full' }}

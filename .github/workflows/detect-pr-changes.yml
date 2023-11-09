@@ -1,0 +1,49 @@
+name: Detect Pull Request Changes
+
+on:
+  workflow_call:
+    outputs:
+      scratch-org-config:
+        description: 'True, when files related to scratch org configuration were changed'
+        value: ${{ jobs.detect-changes.outputs.output1 }}
+      source-files:
+        description: 'True, when source files were changed'
+        value: ${{ jobs.detect-changes.outputs.output2 }}
+      scratch-org-pr-pipeline:
+        description: 'True when scratch org PR pipeline files were changed'
+        value: ${{ jobs.detect-changes.outputs.output3 }}
+      deploy-pr-pipeline:
+        description: 'True when deployment PR pipeline files were changed'
+        value: ${{ jobs.detect-changes.outputs.output4 }}
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      contents: read
+    outputs:
+      output1: ${{ steps.changes.outputs.scratch-org-config }}
+      output2: ${{ steps.changes.outputs.source-files }}
+      output3: ${{ steps.changes.outputs.scratch-org-pr-pipeline }}
+      output4: ${{ steps.changes.outputs.deploy-pr-pipeline }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            scratch-org-config:
+              - 'config/project-scratch-def.json'
+              - 'config/pools/**'
+              - 'scripts/**'
+              - '.forceignore'
+              - 'sfdx-project.json'
+            source-files:
+              - 'force-app/**'
+            scratch-org-pr-pipeline:
+              - '.github/workflows/code-analyze.yml'
+              - '.github/workflows/pull-request.yml'
+              - '.github/workflows/scratch-org-validation.yml'
+            deploy-pr-pipeline:
+              - '.github/workflows/deploy.yml'
+              - '.github/workflows/pull-request.yml'

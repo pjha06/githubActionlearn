@@ -1,0 +1,35 @@
+name: Create Scratch Org Pool
+
+on:
+  workflow_call:
+    inputs:
+      pool-config:
+        required: true
+        type: string
+
+  workflow_dispatch:
+    inputs:
+      pool-config:
+        required: true
+        type: choice
+        options:
+          - ./config/pools/ci-pool.json
+          - ./config/pools/dev-pool.json
+
+jobs:
+  create-pool:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+      - name: Setup Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli
+          sf version
+          sf plugins install packaging
+      - name: Setup SF Power Scripts
+        run: npm install --global @dxatscale/sfpowerscripts
+      - name: Login to DevHub
+        run: sf org login sfdx-url --alias DevHub --sfdx-url-file <(echo "${{ secrets.SFDX_AUTH_URL_DEVHUB }}")
+      - name: Create Scratch Org Pool
+        run: sfp orchestrator:prepare --poolconfig ${{ inputs.pool-config }} --targetdevhubusername DevHub

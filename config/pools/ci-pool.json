@@ -1,0 +1,10 @@
+{
+    "$schema": "https://raw.githubusercontent.com/dxatscale/sfpowerscripts/main/packages/core/resources/pooldefinition.schema.json",
+    "tag": "ci-pool",
+    "expiry": 2,
+    "maxAllocation": 10,
+    "configFilePath": "config/project-scratch-def.json",
+    "succeedOnDeploymentErrors": false,
+    "relaxAllIPRanges": true,
+    "postDeploymentScriptPath": "scripts/pools/ci-pool-post.sh"
+}

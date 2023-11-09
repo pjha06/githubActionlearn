@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Email_Required_for_Lead</fullName>
+    <active>true</active>
+    <description
+    >This validation rule restricts to user create and update the lead record without email address.</description>
+    <errorConditionFormula>AND(ISBLANK(Email),
+   NOT($Setup.LogicSwitch__c.DisableValidationRules__c)
+			)</errorConditionFormula>
+    <errorDisplayField>Email</errorDisplayField>
+    <errorMessage>Email address is a required field on the Lead creation.</errorMessage>
+</ValidationRule>

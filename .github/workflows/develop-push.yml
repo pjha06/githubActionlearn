@@ -1,0 +1,61 @@
+name: After push to develop branch
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  detect-changes:
+    uses: ./.github/workflows/detect-pr-changes.yml
+    permissions:
+      pull-requests: read
+      contents: read
+
+  delete-ci-pool:
+    name: 'Delete CI Pool'
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.scratch-org-config == 'true' }}
+    uses: ./.github/workflows/delete-scratch-org-pool.yml
+    with:
+      tag: ci-pool
+    secrets: inherit
+
+  delete-dev-pool:
+    name: 'Delete Dev Pool'
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.scratch-org-config == 'true' }}
+    uses: ./.github/workflows/delete-scratch-org-pool.yml
+    with:
+      tag: dev-pool
+    secrets: inherit
+
+  create-ci-pool:
+    name: 'Create CI Pool'
+    needs: delete-ci-pool
+    uses: ./.github/workflows/create-scratch-org-pool.yml
+    with:
+      pool-config: ./config/pools/ci-pool.json
+    secrets: inherit
+
+  create-dev-pool:
+    name: 'Create Dev Pool'
+    needs: delete-dev-pool
+    uses: ./.github/workflows/create-scratch-org-pool.yml
+    with:
+      pool-config: ./config/pools/dev-pool.json
+    secrets: inherit
+
+  deploy-dev-stage:
+    name: Deploy to Dev-Stage
+    uses: ./.github/workflows/deploy.yml
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.source-files == 'true' }}
+    secrets: inherit
+    permissions:
+      contents: write
+    with:
+      validate-only: false
+      target-org: Dev-Stage
+      concurrency-group: 'dev-stage-deploy'
+      deploy-type: Delta

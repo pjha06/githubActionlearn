@@ -1,0 +1,34 @@
+name: Delete Scratch Org Pool
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        type: choice
+        options:
+          - ci-pool
+          - dev-pool
+
+jobs:
+  delete-pool:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+      - name: Setup Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli
+          sf version
+      - name: Setup SF Power Scripts
+        run: npm install --global @dxatscale/sfpowerscripts
+      - name: Login to DevHub
+        run: sf org login sfdx-url --alias DevHub --sfdx-url-file <(echo "${{ secrets.SFDX_AUTH_URL_DEVHUB }}")
+      - name: Delete Scratch Org Pool
+        run: sfp pool:delete --tag ${{ inputs.tag }} --targetdevhubusername DevHub

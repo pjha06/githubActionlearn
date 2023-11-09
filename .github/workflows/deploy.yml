@@ -1,0 +1,128 @@
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      validate-only:
+        type: boolean
+      target-org:
+        type: string
+        required: true
+      concurrency-group:
+        type: string
+        required: true
+      deploy-type:
+        type: string
+        required: true
+
+  workflow_dispatch:
+    inputs:
+      validate-only:
+        type: boolean
+      target-org:
+        required: true
+        type: choice
+        options:
+          - Dev-Stage
+          - Dev-CPQ
+          - QA
+          - Production
+      concurrency-group:
+        required: true
+        type: choice
+        options:
+          - dev-stage-deploy
+          - dev-cpq-deploy
+          - qa-deploy
+          - prod-deploy
+      deploy-type:
+        required: true
+        type: choice
+        options:
+          - Delta
+          - Full
+
+concurrency: ${{ inputs.concurrency-group }}
+
+env:
+  RELEASE_TAG_BASE: |-
+    ${{
+         inputs.target-org == 'Production' && 'release_production'
+      || inputs.target-org == 'Dev-Stage' && 'release_dev_stage'
+      || inputs.target-org == 'Dev-CPQ' && 'release_dev_cpq'
+      || inputs.target-org == 'QA' && 'release_qa'
+    }}
+
+jobs:
+  run-deploy:
+    runs-on: ubuntu-latest
+    environment: |-
+      ${{
+         inputs.target-org == 'Production' && 'production'
+      || inputs.target-org == 'Dev-Stage' && 'dev-stage'
+      || inputs.target-org == 'Dev-CPQ' && 'dev-cpq'
+      || inputs.target-org == 'QA' && 'qa'
+      }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v3
+      - name: Setup Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli
+          sf version
+      - name: Login to Org
+        run: sf org login sfdx-url --set-default --sfdx-url-file <(echo "${{ secrets.SFDX_AUTH_URL }}")
+      - name: Install sfdx-git-delta
+        if: inputs.deploy-type == 'Delta'
+        run: echo 'y' | sf plugins install sfdx-git-delta
+      - name: Get last release tag
+        if: inputs.deploy-type == 'Delta'
+        id: get-tag
+        run: echo "last-tag=`git tag --sort=-committerdate -l ${{ format('{0}_*', env.RELEASE_TAG_BASE) }} | sed -n 1p`" >> "$GITHUB_OUTPUT"
+      - name: Generate delta
+        if: inputs.deploy-type == 'Delta'
+        run: |
+          mkdir -p deltas
+          sf sgd:source:delta --from "${{ steps.get-tag.outputs.last-tag }}" --to "HEAD" --output deltas --generate-delta --ignore .forceignore
+          echo "# package.xml"
+          cat deltas/package/package.xml; echo ""
+          echo "# destructiveChanges.xml"
+          cat deltas/destructiveChanges/destructiveChanges.xml; echo ""
+      - name: Run deploy
+        run: |
+          deployFlags=(
+            --wait 30
+            --test-level RunLocalTests
+          )
+          if [ "${{ inputs.deploy-type }}" = "Full" ]; then
+            deployFlags+=( --source-dir force-app )
+          fi
+          if [ "${{ inputs.deploy-type }}" = "Delta" ]; then
+            deployFlags+=( --manifest deltas/package/package.xml )
+            deployFlags+=( --post-destructive-changes deltas/destructiveChanges/destructiveChanges.xml )
+          fi
+          if [ "${{ inputs.validate-only }}" = "true" ]; then
+            deployFlags+=( --dry-run )
+          fi
+          sf project deploy start "${deployFlags[@]}"
+
+  tag-deploy:
+    runs-on: ubuntu-latest
+    needs: run-deploy
+    if: inputs.validate-only != true
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get current date
+        id: date
+        uses: Kaven-Universe/github-action-current-date-time@v1
+        with:
+          format: 'YYYY-MM-DD_HH-mm'
+      - name: Tag successful deploy
+        run: |
+          tagValue=${{ format('{0}_{1}', env.RELEASE_TAG_BASE, steps.date.outputs.time) }}
+          git tag $tagValue
+          git push origin --tags

@@ -1,0 +1,51 @@
+name: Scratch Org Validation
+
+on:
+  workflow_call:
+
+jobs:
+  validate-lwc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+      - name: Setup project
+        run: |
+          npm install
+      - name: Run LWC tests
+        run: npm run test:lwc:coverage
+
+  detect-changes:
+    uses: ./.github/workflows/detect-pr-changes.yml
+    permissions:
+      pull-requests: read
+      contents: read
+  validate-apex:
+    needs: [detect-changes]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+      - name: Setup Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli
+          sf version
+      - name: Setup SF Power Scripts
+        run: npm install --global @dxatscale/sfpowerscripts
+      - name: Login to DevHub
+        run: sf org login sfdx-url --alias DevHub --sfdx-url-file <(echo "${{ secrets.SFDX_AUTH_URL_DEVHUB }}")
+      - name: Fetch Scratch Org from the pool
+        if: ${{ needs.detect-changes.outputs.scratch-org-config == 'false'}}
+        run: sfp pool:fetch --setdefaultusername --tag ci-pool --targetdevhubusername DevHub --nosourcetracking
+      - name: Create new Scratch Org
+        if: ${{ needs.detect-changes.outputs.scratch-org-config == 'true'}}
+        run: |
+          sf org create scratch --alias CI_SO --set-default --definition-file ./config/project-scratch-def.json --target-dev-hub DevHub --wait 10 --duration-days 1
+          sh ./scripts/pools/ci-pool-post.sh "CI_SO"
+      - name: Push Source to the scratch org
+        run: sf project deploy start --wait 30
+      - name: Run Apex tests
+        run: npm run test:apex:coverage
+      - name: 'Delete scratch org'
+        if: always()
+        run: sf org delete scratch --no-prompt

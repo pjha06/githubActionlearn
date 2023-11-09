@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# A simple Git Hook to validate the commit message
+# Validations
+# 1. There should be a commit message !
+# 2.SOC-1 - my work
+
+
+commit_regex='^(SOC-[0-9]+)|merge branch'
+error_msg="Aborting commit. Your commit message is missing a JIRA ticket,Please use commit message like SOC-XXX:Details of work item"
+
+
+if ! grep -iqE "$commit_regex" "$1";
+then
+    echo "$error_msg" >&2
+    exit 1
+fi

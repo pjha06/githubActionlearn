@@ -1,0 +1,95 @@
+name: Static Code Analyze
+
+on:
+  workflow_call:
+
+jobs:
+  PMD:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+      - name: Setup Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli
+          sf version
+          sf plugins install @salesforce/sfdx-scanner
+      - name: Run PMD
+        run: |
+          npm run pmd
+
+  RetireJS:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+      - name: Setup Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli
+          sf version
+          sf plugins install @salesforce/sfdx-scanner
+      - name: Run RetireJS
+        run: |
+          npm run retirejs
+  GraphEngine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+      - name: Setup Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli
+          sf version
+          sf plugins install @salesforce/sfdx-scanner
+      - name: Run Data Flow Analysis
+        run: |
+          npm run dfa
+
+  ESLint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+      - name: Setup Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli
+          sf version
+      - name: Setup project
+        run: |
+          npm install
+      - name: Run ESLint
+        run: |
+          npm run eslint
+
+  Prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+      - name: Setup Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli
+          sf version
+      - name: Setup project
+        run: |
+          npm install
+      - name: Run Prettier
+        run: |
+          npm run prettier:verify
+
+  LightningFlowScanner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+      - name: Setup Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli
+          sf version
+          echo 'y' | sf plugins install lightning-flow-scanner
+      - name: Run Lightning Flow Scanner
+        run: |
+          npm run flow:scanner
+          # When https://github.com/Force-Config-Control/lightning-flow-scanner-sfdx/issues/71 is fixed, lines below can be deleted
+          STATUS=`sf flow scan --json | jq '.result.results' | jq length`
+          exit $STATUS
