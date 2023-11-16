@@ -35,10 +35,12 @@ jobs:
       - name: Login to DevHub
         run: sf org login sfdx-url --alias DevHub --sfdx-url-file <(echo "${{ secrets.SFDX_AUTH_URL_DEVHUB }}")
       - name: Fetch Scratch Org from the pool
+        id: fetchOrg
+        continue-on-error: true
         if: ${{ needs.detect-changes.outputs.scratch-org-config == 'false'}}
         run: sfp pool:fetch --setdefaultusername --tag ci-pool --targetdevhubusername DevHub --nosourcetracking
       - name: Create new Scratch Org
-        if: ${{ needs.detect-changes.outputs.scratch-org-config == 'true'}}
+        if: ${{ needs.detect-changes.outputs.scratch-org-config == 'true' ||  steps.fetchOrg.outcome == 'failure'  }}
         run: |
           sf org create scratch --alias CI_SO --set-default --definition-file ./config/project-scratch-def.json --target-dev-hub DevHub --wait 10 --duration-days 1
           sh ./scripts/pools/ci-pool-post.sh "CI_SO"
