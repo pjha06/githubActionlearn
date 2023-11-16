@@ -2,7 +2,7 @@ name: Scheduled Scratch Org Pool
 
 on:
   schedule:
-    - cron: '0 22 * * 1-5' # 10 PM UTC on weekdays
+    - cron: '0 0 0 ? APR * *' # 10 PM UTC on weekdays
 
 jobs:
   create-ci-pool:
