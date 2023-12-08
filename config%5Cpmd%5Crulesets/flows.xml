@@ -1,0 +1,159 @@
+<ruleset
+    name="Employ PMD Rules for Flows"
+    xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd"
+>
+    <description>PMD Flow Rules for the Employ Salesforce One Org Project</description>
+    
+    <rule
+        name="FlowShouldUseLogicSwitch"
+        language="xml"
+        message="Flows should use LogicSwitch__c.DisableFlows__c in entry criteria or in the first decision element"
+        class="net.sourceforge.pmd.lang.rule.XPathRule"
+    >
+        <description>
+            All Flows should use LogicSwitch__c.DisableFlows__c flag to provide ability to turn on / off the Flow without deployments.
+        </description>
+        <priority>3</priority>
+        <properties>
+            <property name="version" value="2.0" />
+            <property name="xpath">
+                <value>
+          if (<![CDATA[//Flow//start//triggerType//text[@Image="RecordBeforeSave" or @Image="RecordAfterSave"]]]>)
+          then (
+                if (<![CDATA[//Flow//start//filterFormula//text[(contains(@Image, '$Setup.LogicSwitch__c.DisableFlows__c'))]]]>)
+                then ( false)
+                else (
+                  if(<![CDATA[//Flow//decisions//rules//conditions//leftValueReference//text[(contains(@Image, '$Setup.LogicSwitch__c.DisableFlows__c'))]]]>)
+                  then(false)
+                  else(<![CDATA[//Flow//decisions//rules//conditions//leftValueReference//text[not(contains(@Image, '$Setup.LogicSwitch__c.DisableFlows__c'))]]]>) 
+                )
+              )
+          else ()
+		      </value>
+            </property>
+        </properties>
+    </rule>
+    <rule
+        name="FlowNameShouldMatchWithTrigger"
+        language="xml"
+        message="Trigger in the Flow API Name should match with the actual trigger used by the Flow"
+        class="net.sourceforge.pmd.lang.rule.XPathRule"
+    >
+        <description>
+            All flows need to have matching names with the actual triggers defined within the Flow.
+        </description>
+        <priority>3</priority>
+        <properties>
+            <property name="version" value="2.0" />
+            <property name="xpath">
+                <value>
+                    <![CDATA[
+                    if (//Flow/start/triggerType/text[@Image = 'RecordAfterSave']) then (
+                        if (//Flow/start/recordTriggerType/text[@Image = 'Create']) then (
+                            if (//Flow[contains(pmd:fileName(), 'AfterCreate')]) then () else (//Flow)
+                        ) else (
+                            if (//Flow/start/recordTriggerType/text[@Image = 'Update']) then (
+                                if (//Flow[contains(pmd:fileName(), 'AfterUpdate')]) then () else (//Flow)
+                            ) else ()
+                        )
+                    ) else (
+                        if (//Flow/start/triggerType/text[@Image = 'RecordBeforeSave']) then (
+                            if (//Flow/start/recordTriggerType/text[@Image = 'Create']) then (
+                                if (//Flow[contains(pmd:fileName(), 'BeforeCreate')]) then () else (//Flow)
+                            ) else (
+                                if (//Flow/start/recordTriggerType/text[@Image = 'Update']) then (
+                                    if (//Flow[contains(pmd:fileName(), 'BeforeUpdate')]) then () else (//Flow)
+                                ) else ()
+                            ) 
+                        ) else ( 
+                            if (//Flow/start/triggerType/text[@Image = 'RecordBeforeDelete']) then (
+                                if (//Flow/start/recordTriggerType/text[@Image = 'Delete']) then (
+                                    if (//Flow[contains(pmd:fileName(), 'BeforeDelete')]) then () else (//Flow)  
+                                ) else ()
+                            ) else()
+                        )
+                    )
+                ]]>
+		      </value>
+            </property>
+        </properties>
+    </rule>
+    <rule
+        name="FlowErrorLoggerShouldUseValidFlowName"
+        language="xml"
+        message="FlowRecordLogEntry action parameter flowName should use actual API Flow name"
+        class="net.sourceforge.pmd.lang.rule.XPathRule"
+    >
+        <description>
+            When FlowRecordLogEntry action is used, value passed in the flowName parameter needs to match with the Flow API Name.
+        </description>
+        <priority>1</priority>
+        <properties>
+            <property name="version" value="2.0" />
+            <property name="xpath">
+                <value>
+                    <![CDATA[
+                    if (//Flow/actionCalls/actionName//text[(contains(@Image, 'FlowRecordLogEntry'))]) then (
+                        if (//Flow/actionCalls/inputParameters/name//text[(contains(@Image, 'flowName'))]) then (
+                            if (//Flow/actionCalls/inputParameters/value/stringValue//text[substring-before(pmd:fileName(), '.flow-meta.xml') = @Image]) then ()
+                            else(//Flow)
+
+                        )else()
+                    )
+                    else()
+                    ]]>
+                </value>
+            </property>
+        </properties>
+    </rule>
+    <rule
+        name="FlowNameShouldDefineTriggerOrder"
+        language="xml"
+        message="flow  is missing triggerOrder"
+        class="net.sourceforge.pmd.lang.rule.XPathRule"
+    >
+        <description>
+            All record-triggered flows need to have triggerOrder defined
+        </description>
+        <priority>1</priority>
+        <properties>
+            <property name="version" value="2.0" />
+            <property name="xpath">
+                <value>
+                    <![CDATA[
+                    if(//Flow//start//triggerType//text[@Image="RecordBeforeSave" or @Image="RecordAfterSave" or @Image="RecordBeforeDelete"]) then(
+                        if(//Flow/triggerOrder)then()else(//Flow)
+                    )
+                    else()
+                    ]]>
+                </value>
+            </property>
+        </properties>
+    </rule>
+    <rule
+        name="FlowNameLabelInterViewNameSyncCheck"
+        language="xml"
+        message="Flow API Name, Label and Interview Label are not in Sync"
+        class="net.sourceforge.pmd.lang.rule.XPathRule"
+    >
+        <description>
+            Flow API Name, Label and Interview Label needs to be matchin
+        </description>
+        <priority>1</priority>
+        <properties>
+            <property name="version" value="2.0" />
+            <property name="xpath">
+                <value>
+                    <![CDATA[
+                    if(//Flow/label//text[substring-before(pmd:fileName(), '.flow-meta.xml') = @Image]) then(
+                        if(//Flow/interviewLabel//text [concat( substring-before(pmd:fileName(), '.flow-meta.xml'),' {!$Flow.CurrentDateTime}') = @Image])
+                        then()else(//Flow/interviewLabel//text[substring-before(@Image, ' {!$Flow.CurrentDateTime}')])   
+                    ) else()
+                    ]]>
+                </value>
+            </property>
+        </properties>
+    </rule>
+</ruleset>
