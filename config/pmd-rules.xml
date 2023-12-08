@@ -109,4 +109,15 @@
   <rule ref="category/apex/security.xml/ApexSuggestUsingNamedCred" />
   <rule ref="category/apex/security.xml/ApexXSSFromEscapeFalse" />
   <rule ref="category/apex/security.xml/ApexXSSFromURLParam" />
+
+  <!-- Flows -->
+  <rule ref="./config/pmd/rulesets/flows.xml/FlowShouldUseLogicSwitch" />
+  <rule ref="./config/pmd/rulesets/flows.xml/FlowNameShouldMatchWithTrigger" />
+  <rule ref="./config/pmd/rulesets/flows.xml/FlowErrorLoggerShouldUseValidFlowName" />  
+  <rule ref="./config/pmd/rulesets/flows.xml/FlowNameShouldDefineTriggerOrder" />
+  <rule ref="./config/pmd/rulesets/flows.xml/FlowNameLabelInterViewNameSyncCheck" /> 
+
+  <!-- Validation Rules -->
+  <rule ref="./config/pmd/rulesets/validationRules.xml/ValidationRuleShouldUseLogicSwitch" />
+
 </ruleset>
