@@ -3,25 +3,39 @@ name: Create Scratch Org Pool
 on:
   workflow_call:
     inputs:
-      pool-config:
+      pool:
         required: true
         type: string
 
   workflow_dispatch:
     inputs:
-      pool-config:
+      pool:
         required: true
         type: choice
         options:
-          - ./config/pools/ci-pool.json
-          - ./config/pools/dev-pool.json
+          - ci-pool
+          - dev-pool
+env:
+  POOL_CONFIG: |-
+    ${{
+         inputs.pool == 'ci-pool' && './config/pools/ci-pool.json'
+      || inputs.pool == 'dev-pool' && './config/pools/dev-pool.json'
+    }}
+  LOG_ARTIFACT_NAME: |-
+    ${{
+         inputs.pool == 'ci-pool' && 'sfp-logs-ci'
+      || inputs.pool == 'dev-pool' && 'sfp-logs-dev'
+    }}
+  CI_SCRATCH_ORG_DEPLOY: true
 
 jobs:
   create-pool:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Setup Salesforce CLI
         run: |
           npm install --global @salesforce/cli
@@ -32,4 +46,11 @@ jobs:
       - name: Login to DevHub
         run: sf org login sfdx-url --alias DevHub --sfdx-url-file <(echo "${{ secrets.SFDX_AUTH_URL_DEVHUB }}")
       - name: Create Scratch Org Pool
-        run: sfp orchestrator:prepare --poolconfig ${{ inputs.pool-config }} --targetdevhubusername DevHub
+        run: sfp orchestrator:prepare --poolconfig ${{ env.POOL_CONFIG }} --targetdevhubusername DevHub
+      - name: upload SFP logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.LOG_ARTIFACT_NAME }}
+          path: .sfpowerscripts/prepare_logs
+          retention-days: 2
