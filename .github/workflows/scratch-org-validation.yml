@@ -3,12 +3,17 @@ name: Scratch Org Validation
 on:
   workflow_call:
 
+env:
+  CI_SCRATCH_ORG_DEPLOY: true
+
 jobs:
   validate-lwc:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Setup project
         run: |
           npm install
@@ -25,7 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Setup Salesforce CLI
         run: |
           npm install --global @salesforce/cli
@@ -38,14 +45,18 @@ jobs:
         id: fetchOrg
         continue-on-error: true
         if: ${{ needs.detect-changes.outputs.scratch-org-config == 'false'}}
-        run: sfp pool:fetch --setdefaultusername --tag ci-pool --targetdevhubusername DevHub --nosourcetracking
+        run: sfp pool:fetch --alias CI_SO --setdefaultusername --tag ci-pool --targetdevhubusername DevHub --nosourcetracking
       - name: Create new Scratch Org
         if: ${{ needs.detect-changes.outputs.scratch-org-config == 'true' ||  steps.fetchOrg.outcome == 'failure'  }}
         run: |
           sf org create scratch --alias CI_SO --set-default --definition-file ./config/project-scratch-def.json --target-dev-hub DevHub --wait 10 --duration-days 1
           sh ./scripts/pools/ci-pool-post.sh "CI_SO"
+      - name: Prepare replacements
+        run: echo "CURRENT_USER_USERNAME=$(node -e "process.stdout.write($(sf org display user --target-org CI_SO --json).result.username)")" >> $GITHUB_ENV
       - name: Push Source to the scratch org
-        run: sf project deploy start --wait 30
+        run: sf project deploy start --wait 30 --ignore-conflicts
+      - name: Assign Permission Sets to the user
+        run: sf org assign permset --name Persona_System_Admin --name CPQ_Admin --name CPQ_Advanced_Approval_Admin
       - name: Run Apex tests
         run: npm run test:apex:coverage
       - name: 'Delete scratch org'
