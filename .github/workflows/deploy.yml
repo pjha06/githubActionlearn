@@ -25,7 +25,10 @@ on:
         options:
           - Dev-Stage
           - Dev-CPQ
+          - Dev-Marketo
+          - Data-Migration
           - QA
+          - UAT
           - Production
       concurrency-group:
         required: true
@@ -33,7 +36,10 @@ on:
         options:
           - dev-stage-deploy
           - dev-cpq-deploy
+          - dev-marketo-deploy
+          - data-migration-deploy
           - qa-deploy
+          - uat-deploy
           - prod-deploy
       deploy-type:
         required: true
@@ -50,7 +56,10 @@ env:
          inputs.target-org == 'Production' && 'release_production'
       || inputs.target-org == 'Dev-Stage' && 'release_dev_stage'
       || inputs.target-org == 'Dev-CPQ' && 'release_dev_cpq'
+      || inputs.target-org == 'Dev-Marketo' && 'release_dev_marketo'
+      || inputs.target-org == 'Data-Migration' && 'release_data_migration'
       || inputs.target-org == 'QA' && 'release_qa'
+      || inputs.target-org == 'UAT' && 'release_uat'
     }}
 
 jobs:
@@ -61,13 +70,21 @@ jobs:
          inputs.target-org == 'Production' && 'production'
       || inputs.target-org == 'Dev-Stage' && 'dev-stage'
       || inputs.target-org == 'Dev-CPQ' && 'dev-cpq'
+      || inputs.target-org == 'Dev-Marketo' && 'dev-marketo'
+      || inputs.target-org == 'Data-Migration' && 'data-migration'
       || inputs.target-org == 'QA' && 'qa'
+      || inputs.target-org == 'UAT' && 'uat'
       }}
+    env:
+      CI_ORG_DEPLOY: true
+      APPROVAL_REPLY_SERVICE_CONTEXT_USER_USERNAME: ${{ vars.APPROVAL_REPLY_SERVICE_CONTEXT_USER_USERNAME }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Setup Salesforce CLI
         run: |
           npm install --global @salesforce/cli
@@ -85,7 +102,7 @@ jobs:
         if: inputs.deploy-type == 'Delta'
         run: |
           mkdir -p deltas
-          sf sgd:source:delta --from "${{ steps.get-tag.outputs.last-tag }}" --to "HEAD" --output deltas --generate-delta --ignore .forceignore
+          sf sgd:source:delta --from "${{ steps.get-tag.outputs.last-tag }}" --to "HEAD" --output deltas --generate-delta --ignore .forceignore --ignore-destructive .destructiveignore
           echo "# package.xml"
           cat deltas/package/package.xml; echo ""
           echo "# destructiveChanges.xml"
