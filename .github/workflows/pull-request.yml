@@ -10,6 +10,9 @@ jobs:
   code-analyze:
     name: Run Code Analyze
     uses: ./.github/workflows/code-analyze.yml
+    permissions:
+      pull-requests: read
+      contents: read
 
   is-branch-up-to-date:
     runs-on: ubuntu-latest
@@ -34,7 +37,7 @@ jobs:
     name: Validate on Scratch Org
     uses: ./.github/workflows/scratch-org-validation.yml
     needs: [is-branch-up-to-date, detect-changes]
-    if: ${{ needs.detect-changes.outputs.source-files == 'true' || needs.detect-changes.outputs.scratch-org-config == 'true'  || needs.detect-changes.outputs.scratch-org-pr-pipeline == 'true'}}
+    if: ${{ needs.detect-changes.outputs.source-files == 'true' || needs.detect-changes.outputs.replacement-files == 'true' || needs.detect-changes.outputs.scratch-org-config == 'true'  || needs.detect-changes.outputs.scratch-org-pr-pipeline == 'true'}}
     secrets: inherit
     permissions:
       pull-requests: read
@@ -44,7 +47,7 @@ jobs:
     name: Validate on Dev-Stage
     uses: ./.github/workflows/deploy.yml
     needs: [is-branch-up-to-date, detect-changes]
-    if: ${{ needs.detect-changes.outputs.source-files == 'true' || needs.detect-changes.outputs.deploy-pr-pipeline == 'true' }}
+    if: ${{ needs.detect-changes.outputs.source-files == 'true' || needs.detect-changes.outputs.replacement-files == 'true' || needs.detect-changes.outputs.deploy-pr-pipeline == 'true' }}
     secrets: inherit
     permissions:
       pull-requests: read
