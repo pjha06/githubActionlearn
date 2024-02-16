@@ -15,7 +15,7 @@ jobs:
   delete-ci-pool:
     name: 'Delete CI Pool'
     needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.scratch-org-config == 'true' }}
+    if: ${{ needs.detect-changes.outputs.scratch-org-config == 'true' || needs.detect-changes.outputs.ci-pool-config == 'true' }}
     uses: ./.github/workflows/delete-scratch-org-pool.yml
     with:
       tag: ci-pool
@@ -24,7 +24,7 @@ jobs:
   delete-dev-pool:
     name: 'Delete Dev Pool'
     needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.scratch-org-config == 'true' }}
+    if: ${{ needs.detect-changes.outputs.scratch-org-config == 'true' || needs.detect-changes.outputs.dev-pool-config == 'true' }}
     uses: ./.github/workflows/delete-scratch-org-pool.yml
     with:
       tag: dev-pool
@@ -35,7 +35,7 @@ jobs:
     needs: delete-ci-pool
     uses: ./.github/workflows/create-scratch-org-pool.yml
     with:
-      pool-config: ./config/pools/ci-pool.json
+      pool: ci-pool
     secrets: inherit
 
   create-dev-pool:
@@ -43,7 +43,7 @@ jobs:
     needs: delete-dev-pool
     uses: ./.github/workflows/create-scratch-org-pool.yml
     with:
-      pool-config: ./config/pools/dev-pool.json
+      pool: dev-pool
     secrets: inherit
 
   deploy-dev-stage:
