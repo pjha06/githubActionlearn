@@ -15,6 +15,21 @@ on:
       deploy-pr-pipeline:
         description: 'True when deployment PR pipeline files were changed'
         value: ${{ jobs.detect-changes.outputs.output4 }}
+      dev-pool-config:
+        description: 'True when dev pool files were changed'
+        value: ${{ jobs.detect-changes.outputs.output5 }}
+      ci-pool-config:
+        description: 'True when ci pool files were changed'
+        value: ${{ jobs.detect-changes.outputs.output6 }}
+      js-files:
+        description: 'True when js files were changed'
+        value: ${{ jobs.detect-changes.outputs.output7 }}
+      flow-files:
+        description: 'True when flows files were changed'
+        value: ${{ jobs.detect-changes.outputs.output8 }}
+      replacement-files:
+        description: 'True when replacement files were changed'
+        value: ${{ jobs.detect-changes.outputs.output9 }}
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
@@ -26,16 +41,20 @@ jobs:
       output2: ${{ steps.changes.outputs.source-files }}
       output3: ${{ steps.changes.outputs.scratch-org-pr-pipeline }}
       output4: ${{ steps.changes.outputs.deploy-pr-pipeline }}
+      output5: ${{ steps.changes.outputs.dev-pool-config }}
+      output6: ${{ steps.changes.outputs.ci-pool-config }}
+      output7: ${{ steps.changes.outputs.js-files }}
+      output8: ${{ steps.changes.outputs.flow-files }}
+      output9: ${{ steps.changes.outputs.replacement-files }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: changes
         with:
           filters: |
             scratch-org-config:
               - 'config/project-scratch-def.json'
-              - 'config/pools/**'
-              - 'scripts/**'
+              - 'scripts/!(pools)**'
               - '.forceignore'
               - 'sfdx-project.json'
             source-files:
@@ -47,3 +66,15 @@ jobs:
             deploy-pr-pipeline:
               - '.github/workflows/deploy.yml'
               - '.github/workflows/pull-request.yml'
+            dev-pool-config:
+              - 'config/pools/dev-pool.json'
+              - 'scripts/pools/dev-pool-post.sh'
+            ci-pool-config:
+              - 'config/pools/ci-pool.json'
+              - 'scripts/pools/ci-pool-post.sh'
+            js-files:
+              - '**.js'
+            flow-files:
+              - '**/*.flow-meta.xml'
+            replacement-files:
+              - 'replacement-files/**'
