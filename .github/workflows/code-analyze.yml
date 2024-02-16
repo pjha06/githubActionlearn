@@ -1,14 +1,23 @@
+---
 name: Static Code Analyze
-
 on:
-  workflow_call:
-
+  workflow_call: null
 jobs:
+  detect-changes:
+    uses: ./.github/workflows/detect-pr-changes.yml
+    permissions:
+      pull-requests: read
+      contents: read
+
   PMD:
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.source-files == 'true'}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Setup Salesforce CLI
         run: |
           npm install --global @salesforce/cli
@@ -17,12 +26,15 @@ jobs:
       - name: Run PMD
         run: |
           npm run pmd
-
   RetireJS:
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.js-files == 'true'}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Setup Salesforce CLI
         run: |
           npm install --global @salesforce/cli
@@ -32,10 +44,14 @@ jobs:
         run: |
           npm run retirejs
   GraphEngine:
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.source-files == 'true'}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Setup Salesforce CLI
         run: |
           npm install --global @salesforce/cli
@@ -44,12 +60,15 @@ jobs:
       - name: Run Data Flow Analysis
         run: |
           npm run dfa
-
   ESLint:
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.js-files == 'true'}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Setup Salesforce CLI
         run: |
           npm install --global @salesforce/cli
@@ -60,12 +79,13 @@ jobs:
       - name: Run ESLint
         run: |
           npm run eslint
-
   Prettier:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Setup Salesforce CLI
         run: |
           npm install --global @salesforce/cli
@@ -76,20 +96,25 @@ jobs:
       - name: Run Prettier
         run: |
           npm run prettier:verify
-
   LightningFlowScanner:
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.flow-files == 'true'}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Setup Salesforce CLI
         run: |
           npm install --global @salesforce/cli
           sf version
           echo 'y' | sf plugins install lightning-flow-scanner
       - name: Run Lightning Flow Scanner
-        run: |
+        run: >
+          # Below runs are separated as Apiname and Flowname rules were not working
+          together
+
           npm run flow:scanner
-          # When https://github.com/Force-Config-Control/lightning-flow-scanner-sfdx/issues/71 is fixed, lines below can be deleted
-          STATUS=`sf flow scan --json | jq '.result.results' | jq length`
-          exit $STATUS
+
+          npm run flow:scanner -- --config .flow-scanner-naming-convention.json
