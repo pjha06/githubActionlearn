@@ -2,19 +2,20 @@ name: Scheduled Scratch Org Pool
 
 on:
   schedule:
-    - cron: '0 0 0 ? APR * *' # 10 PM UTC on weekdays
+    - cron: '0 22 * * 0-4' # Sunday - Thursday at 10 PM UTC
+    - cron: '0 10 * * 1-5' # Monday - Friday at 10 AM UTC
 
 jobs:
   create-ci-pool:
     name: 'Create CI Pool'
     uses: ./.github/workflows/create-scratch-org-pool.yml
     with:
-      pool-config: ./config/pools/ci-pool.json
+      pool: ci-pool
     secrets: inherit
 
   create-dev-pool:
     name: 'Create Dev Pool'
     uses: ./.github/workflows/create-scratch-org-pool.yml
     with:
-      pool-config: ./config/pools/dev-pool.json
+      pool: dev-pool
     secrets: inherit
