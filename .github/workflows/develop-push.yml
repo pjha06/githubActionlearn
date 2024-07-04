@@ -7,6 +7,7 @@ on:
 
 jobs:
   detect-changes:
+    name: 'Detect pushed changes'
     uses: ./.github/workflows/detect-pr-changes.yml
     permissions:
       pull-requests: read
@@ -54,6 +55,7 @@ jobs:
     secrets: inherit
     permissions:
       contents: write
+      deployments: write
     with:
       validate-only: false
       target-org: Dev-Stage
