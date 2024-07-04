@@ -1,9 +1,9 @@
----
 name: Static Code Analyze
 on:
   workflow_call: null
 jobs:
   detect-changes:
+    name: 'Detect Pull Request changes'
     uses: ./.github/workflows/detect-pr-changes.yml
     permissions:
       pull-requests: read
@@ -26,6 +26,7 @@ jobs:
       - name: Run PMD
         run: |
           npm run pmd
+
   RetireJS:
     needs: [detect-changes]
     if: ${{ needs.detect-changes.outputs.js-files == 'true'}}
@@ -43,6 +44,7 @@ jobs:
       - name: Run RetireJS
         run: |
           npm run retirejs
+
   GraphEngine:
     needs: [detect-changes]
     if: ${{ needs.detect-changes.outputs.source-files == 'true'}}
@@ -60,25 +62,23 @@ jobs:
       - name: Run Data Flow Analysis
         run: |
           npm run dfa
+
   ESLint:
     needs: [detect-changes]
-    if: ${{ needs.detect-changes.outputs.js-files == 'true'}}
+    if: ${{ needs.detect-changes.outputs.js-files == 'true' || needs.detect-changes.outputs.npm-package == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Setup Salesforce CLI
-        run: |
-          npm install --global @salesforce/cli
-          sf version
       - name: Setup project
         run: |
           npm install
       - name: Run ESLint
         run: |
           npm run eslint
+
   Prettier:
     runs-on: ubuntu-latest
     steps:
@@ -86,16 +86,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Setup Salesforce CLI
-        run: |
-          npm install --global @salesforce/cli
-          sf version
       - name: Setup project
         run: |
           npm install
       - name: Run Prettier
         run: |
           npm run prettier:verify
+
   LightningFlowScanner:
     needs: [detect-changes]
     if: ${{ needs.detect-changes.outputs.flow-files == 'true'}}
@@ -109,11 +106,10 @@ jobs:
         run: |
           npm install --global @salesforce/cli
           sf version
-          echo 'y' | sf plugins install lightning-flow-scanner
+          echo 'y' | sf plugins install lightning-flow-scanner@2.24
       - name: Run Lightning Flow Scanner
         run: >
-          # Below runs are separated as Apiname and Flowname rules were not working
-          together
+          # Below runs are separated as ApiName and FlowName rules were not working together
 
           npm run flow:scanner
 
