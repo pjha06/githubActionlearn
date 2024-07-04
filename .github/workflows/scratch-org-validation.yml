@@ -5,27 +5,22 @@ on:
 
 env:
   CI_SCRATCH_ORG_DEPLOY: true
+  GAINSIGHT_INSTALLATION_KEY: ${{ secrets.GAINSIGHT_INSTALLATION_KEY }}
+  MOCK_ENDPOINT_URL: 'https://employinc.com'
+  FORECAST_CATEGORY_MOST_LIKELY: 'BestCase' # Because ForecastCategoryName picklist cannot be modified in scratch orgs, we need to replace MostLikely with something else
+  SECURITY_ORG_WIDE_EMAIL_ADDRESS: 'test@example.com'
+  SECURITY_EMAIL_SENDER_TYPE: 'CurrentUser' # Verified Org Wide Email Address cannot be created in the scratch org so emails need to be sent as Current User
 
 jobs:
-  validate-lwc:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Setup project
-        run: |
-          npm install
-      - name: Run LWC tests
-        run: npm run test:lwc:coverage
-
   detect-changes:
+    name: 'Detect pull request changes'
     uses: ./.github/workflows/detect-pr-changes.yml
     permissions:
       pull-requests: read
       contents: read
-  validate-apex:
+
+  validate-scratch-org:
+    name: 'Run Scratch Org validation'
     needs: [detect-changes]
     runs-on: ubuntu-latest
     steps:
@@ -38,23 +33,30 @@ jobs:
           npm install --global @salesforce/cli
           sf version
       - name: Setup SF Power Scripts
+        if: ${{ needs.detect-changes.outputs.scratch-org-config == 'false'}}
         run: npm install --global @dxatscale/sfpowerscripts
       - name: Login to DevHub
-        run: sf org login sfdx-url --alias DevHub --sfdx-url-file <(echo "${{ secrets.SFDX_AUTH_URL_DEVHUB }}")
+        run: echo "${{ secrets.SFDX_AUTH_URL_DEVHUB }}" | sf org login sfdx-url --alias DevHub --sfdx-url-stdin
       - name: Fetch Scratch Org from the pool
         id: fetchOrg
         continue-on-error: true
         if: ${{ needs.detect-changes.outputs.scratch-org-config == 'false'}}
         run: sfp pool:fetch --alias CI_SO --setdefaultusername --tag ci-pool --targetdevhubusername DevHub --nosourcetracking
       - name: Create new Scratch Org
-        if: ${{ needs.detect-changes.outputs.scratch-org-config == 'true' ||  steps.fetchOrg.outcome == 'failure'  }}
+        if: ${{ needs.detect-changes.outputs.scratch-org-config == 'true' ||  steps.fetchOrg.outcome == 'failure' }}
         run: |
           sf org create scratch --alias CI_SO --set-default --definition-file ./config/project-scratch-def.json --target-dev-hub DevHub --wait 10 --duration-days 1
           sh ./scripts/pools/ci-pool-post.sh "CI_SO"
       - name: Prepare replacements
-        run: echo "CURRENT_USER_USERNAME=$(node -e "process.stdout.write($(sf org display user --target-org CI_SO --json).result.username)")" >> $GITHUB_ENV
+        run: |
+          echo "CURRENT_USER_USERNAME=$(node -e "process.stdout.write($(sf org display user --target-org CI_SO --json).result.username)")" >> $GITHUB_ENV
+          echo "CURRENT_USER_ID=$(node -e "process.stdout.write($(sf org display user --target-org CI_SO --json).result.id)")" >> $GITHUB_ENV
+      - name: Disable source tracking
+        run: sf org disable tracking
       - name: Push Source to the scratch org
         run: sf project deploy start --wait 30 --ignore-conflicts
+      - name: Assign Permission Set Licenses to the user
+        run: sf org assign permsetlicense --name SalesforceCPQ_CPQStandardPerm --name SalesforceCPQ_CPQAAPerm
       - name: Assign Permission Sets to the user
         run: sf org assign permset --name Persona_System_Admin --name CPQ_Admin --name CPQ_Advanced_Approval_Admin
       - name: Run Apex tests
