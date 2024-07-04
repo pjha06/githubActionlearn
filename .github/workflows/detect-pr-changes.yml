@@ -30,8 +30,18 @@ on:
       replacement-files:
         description: 'True when replacement files were changed'
         value: ${{ jobs.detect-changes.outputs.output9 }}
+      npm-package:
+        description: 'True when package.json were changed'
+        value: ${{ jobs.detect-changes.outputs.output10 }}
+      lwc-source-files:
+        description: 'True when LWC source files were changed'
+        value: ${{ jobs.detect-changes.outputs.output11 }}
+      project-config:
+        description: 'True, when files related to project configuration were changed'
+        value: ${{ jobs.detect-changes.outputs.output12 }}
 jobs:
   detect-changes:
+    name: 'Detect pull request changes'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -46,6 +56,9 @@ jobs:
       output7: ${{ steps.changes.outputs.js-files }}
       output8: ${{ steps.changes.outputs.flow-files }}
       output9: ${{ steps.changes.outputs.replacement-files }}
+      output10: ${{ steps.changes.outputs.npm-package }}
+      output11: ${{ steps.changes.outputs.lwc-source-files }}
+      output12: ${{ steps.changes.outputs.project-config }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -78,3 +91,9 @@ jobs:
               - '**/*.flow-meta.xml'
             replacement-files:
               - 'replacement-files/**'
+            npm-package:
+              - 'package.json'
+            lwc-source-files:
+              - 'force-app/main/default/lwc/**/*.js'
+            project-config:
+              - 'sfdx-project.json'
