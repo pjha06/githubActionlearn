@@ -18,6 +18,7 @@ on:
 
 jobs:
   delete-pool:
+    name: Delete Scratch Org Pool
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,6 +32,6 @@ jobs:
       - name: Setup SF Power Scripts
         run: npm install --global @dxatscale/sfpowerscripts
       - name: Login to DevHub
-        run: sf org login sfdx-url --alias DevHub --sfdx-url-file <(echo "${{ secrets.SFDX_AUTH_URL_DEVHUB }}")
+        run: echo "${{ secrets.SFDX_AUTH_URL_DEVHUB }}" | sf org login sfdx-url --alias DevHub --sfdx-url-stdin
       - name: Delete Scratch Org Pool
         run: sfp pool:delete --tag ${{ inputs.tag }} --targetdevhubusername DevHub
