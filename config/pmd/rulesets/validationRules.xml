@@ -9,17 +9,16 @@
         name="ValidationRuleShouldUseLogicSwitch"
         language="xml"
         message="Validation Rules should use LogicSwitch__c.DisableValidationRules__c in the criteria"
-        class="net.sourceforge.pmd.lang.rule.XPathRule"
+        class="net.sourceforge.pmd.lang.rule.xpath.XPathRule"
     >
         <description>
             All Validation Rules should use LogicSwitch__c.DisableValidationRules__c flag to provide ability to turn on / off the Validation Rule without deployments.
         </description>
         <priority>3</priority>
         <properties>
-            <property name="version" value="2.0" />
             <property name="xpath">
                 <value>
-          <![CDATA[//ValidationRule//errorConditionFormula//text[not(contains(@Image, '$Setup.LogicSwitch__c.DisableValidationRules__c'))]]]>
+          <![CDATA[//ValidationRule//errorConditionFormula//text[not(contains(@Text, '$Setup.LogicSwitch__c.DisableValidationRules__c'))]]]>
 		      </value>
             </property>
         </properties>
