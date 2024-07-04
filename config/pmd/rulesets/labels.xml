@@ -1,0 +1,49 @@
+<ruleset
+    name="Employ PMD Rules for Custom Labels"
+    xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd"
+>
+    <description>PMD Custom Label Rules for the Employ Salesforce One Org Project</description>
+
+    <rule
+        name="CustomLabelShouldUseCategories"
+        language="xml"
+        message="Custom Labels should use categories to group labels together"
+        class="net.sourceforge.pmd.lang.rule.xpath.XPathRule"
+    >
+        <description>
+            Custom Label should be added to at least one category.
+        </description>
+        <priority>3</priority>
+        <properties>
+            <property name="xpath">
+                <value>
+                    <![CDATA[
+                    /CustomLabels/labels[not(categories)]
+                    ]]>
+              </value>
+            </property>
+        </properties>
+    </rule>
+    <rule
+        name="CustomLabelCategoriesShouldNotBeEmpty"
+        language="xml"
+        message="Custom Labels should use non empty categories"
+        class="net.sourceforge.pmd.lang.rule.xpath.XPathRule"
+    >
+        <description>
+            Custom Label should be added to at least one non-empty category.
+        </description>
+        <priority>3</priority>
+        <properties>
+            <property name="xpath">
+                <value>
+                    <![CDATA[
+                    /CustomLabels/labels/categories[not(text)]
+                    ]]>
+              </value>
+            </property>
+        </properties>
+    </rule>
+</ruleset>
