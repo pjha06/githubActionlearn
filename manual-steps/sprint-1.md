@@ -1,53 +1,35 @@
-# Sprint 1 - Manual Steps
+# Sprint X - Manual Steps
 
 ## Pre-deployment steps
 
-### [SOC-559](https://employinc.atlassian.net/browse/SOC-559)
+### [EMSOC-XXX](https://employinc.atlassian.net/browse/EMSOC-XXX)
 
-Install Nebula Logger unlocked package:
+More details should be added here
 
-Sandbox - https://test.salesforce.com/packaging/installPackage.apexp?p0=04t5Y000001Mjx5QAC
-
-PROD - https://login.salesforce.com/packaging/installPackage.apexp?p0=04t5Y000001Mjx5QAC
-
-When installing, select `Install for Admins Only` and in Advanced Options select `Compile only the Apex in the package`.
-
-### [SOC-570](https://employinc.atlassian.net/browse/SOC-570)
-
-Install Trigger Handler unlocked package:
-
-Sandbox - https://test.salesforce.com/packaging/installPackage.apexp?p0=04t08000000ga52AAA
-
-PROD - https://login.salesforce.com/packaging/installPackage.apexp?p0=04t08000000ga52AAA
-
-When installing, select `Install for Admins Only` and in Advanced Options select `Compile only the Apex in the package`.
+| Environment    | Completed | By  | Date |
+| -------------- | --------- | --- | ---- |
+| Dev-Stage      |           |     |      |
+| Dev-CPQ        |           |     |      |
+| Dev-Marketo    |           |     |      |
+| Lever          |           |     |      |
+| Data-Migration |           |     |      |
+| QA             |           |     |      |
+| UAT            |           |     |      |
+| PROD           |           |     |      |
 
 ## Post-deployment steps
 
-### [SOC-559](https://employinc.atlassian.net/browse/SOC-559)
+### [EMSOC-XXX](https://employinc.atlassian.net/browse/EMSOC-XXX)
 
-Execute following Apex code to create default settings for Nebula Logger:
+More details should be added here
 
-```java
-insert new LoggerSettings__c(
-    SetupOwnerId = UserInfo.getOrganizationId(),
-    DefaultLogOwner__c = null,
-    DefaultLogPurgeAction__c = 'Delete',
-    DefaultLogShareAccessLevel__c = 'Read',
-    DefaultNumberOfDaysToRetainLogs__c = 14,
-    DefaultPlatformEventStorageLocation__c = 'CUSTOM_OBJECTS',
-    DefaultPlatformEventStorageLoggingLevel__c = null,
-    DefaultSaveMethod__c = 'EVENT_BUS',
-    DefaultScenario__c = null,
-    EndTime__c = null,
-    IsAnonymousModeEnabled__c = false,
-    IsApexSystemDebugLoggingEnabled__c = false,
-    IsDataMaskingEnabled__c = false,
-    IsEnabled__c = true,
-    IsJavaScriptConsoleLoggingEnabled__c = false,
-    IsRecordFieldStrippingEnabled__c = false,
-    IsSavingEnabled__c = true,
-    LoggingLevel__c = 'FINEST',
-    StartTime__c = null
-);
-```
+| Environment    | Completed | By  | Date |
+| -------------- | --------- | --- | ---- |
+| Dev-Stage      |           |     |      |
+| Dev-CPQ        |           |     |      |
+| Dev-Marketo    |           |     |      |
+| Lever          |           |     |      |
+| Data-Migration |           |     |      |
+| QA             |           |     |      |
+| UAT            |           |     |      |
+| PROD           |           |     |      |
